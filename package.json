@@ -1,6 +1,6 @@
 {
   "name": "gogo-updater",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "MomePP <peeranut32@gmail.com>",
   "description": "A firmware update program for gogo ecosystem",
   "license": null,
@@ -17,13 +17,22 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "gogo-updater",
+    "productName": "GoGo Updater",
     "appId": "com.peeranut.gogo-updater",
     "directories": {
       "output": "build"
     },
     "files": [
       "dist/electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "./src/script/",
+        "to": "script",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "dmg": {
       "contents": [
