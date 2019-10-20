@@ -60,16 +60,16 @@ ipcMain.on("update-firmware", (event, arg) => {
 
     if (require('os').platform() == 'win32') {
         if (process.env.NODE_ENV === 'development') {
-            executablePath = require('path').join(require('path').dirname(__dirname), 'script', 'windows\\hid-flash.exe')
+            executablePath = require('path').join(require('path').dirname(__dirname), 'script', 'windows/hid-flash.exe')
         } else {
-            executablePath = require('path').join(process.resourcesPath, 'script', 'windows\\hid-flash.exe')
+            executablePath = require('path').join(process.resourcesPath, 'script', 'windows/hid-flash.exe')
         }
     }
     else if (require('os').platform() == 'darwin') {
         if (process.env.NODE_ENV === 'development') {
-            executablePath = require('path').join(require('path').dirname(__dirname), 'script', 'darwin\\hid-flash')
+            executablePath = require('path').join(require('path').dirname(__dirname), 'script', 'darwin/hid-flash')
         } else {
-            executablePath = require('path').join(process.resourcesPath, 'script', 'darwin\\hid-flash')
+            executablePath = require('path').join(process.resourcesPath, 'script', 'darwin/hid-flash')
         }
     }
 
