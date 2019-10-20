@@ -50,13 +50,13 @@
       ]
     },
     "mac": {
-      "icon": "favicon.ico"
+      "icon": "gogo-logo-512.png"
     },
     "win": {
-      "icon": "favicon.ico"
+      "icon": "gogo-logo-512.png"
     },
     "linux": {
-      "icon": "favicon.ico"
+      "icon": "gogo-logo-512.png"
     }
   },
   "dependencies": {

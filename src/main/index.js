@@ -45,11 +45,15 @@ app.on('activate', () => {
 })
 
 ipcMain.on('browse-firmware-path', () => {
-    var firmwarePath = dialog.showOpenDialog({ properties: ['openFile'], title: 'select new firmware to update' })
+    var firmwarePath = dialog.showOpenDialog({ properties: ['openFile'], title: 'select new firmware to update', filters: [{ name: "firmware file", extensions: ["bin"]}] })
 
     if (firmwarePath != null) {
         mainWindow.webContents.send('browse-firmware-path-response', firmwarePath)
     }
+})
+
+ipcMain.on('browse-firmware-path-error', () => {
+    dialog.showMessageBox(mainWindow, { type: "error", title: 'Updating Error', message: "Please browse for firmware file before click 'Update'" })
 })
 
 ipcMain.on("update-firmware", (event, arg) => {
@@ -79,15 +83,18 @@ ipcMain.on("update-firmware", (event, arg) => {
         if (err) {
             // may show error dialog ...
             // console.log(err)
-            dialog.showErrorBox('Updating Error', err)
+            // dialog.showErrorBox('Updating Error', err)
+            dialog.showMessageBox(mainWindow, { type: "error", title: 'Updating Error', message: err })
             return;
         }
 
         var log = data.split(/\r?\n/)[0].split(':')
 
-        if (log[0] == 'Error')
-        {
-            dialog.showErrorBox('Updating Error', log[1])
+        if (log[0] == 'Error') {
+            // dialog.showErrorBox('Updating Error', log[1])
+            dialog.showMessageBox(mainWindow, { type: "error", title: 'Updating Error', message: log[1] })
+        } else if (log[0] == 'Finish') {
+            dialog.showMessageBox(mainWindow, { type: "info", title: "Update Successfully !", message: "Updating firmware was successful." })
         }
 
         mainWindow.webContents.send('update-firmware-finish')
