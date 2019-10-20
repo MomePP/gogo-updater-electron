@@ -8,7 +8,7 @@
                 </div>
             </div>
             <div class="right-side">
-                <button @click="openDialog()">Browse</button>
+                <button :disabled="isUpdating" @click="openDialog()">Browse</button>
             </div>
         </main>
         <main>
@@ -18,7 +18,7 @@
                 <br />
                 <br />
                 <clip-loader class="loader" :loading="isUpdating" :color="color" :size="size"></clip-loader>
-                <button class="alt" @click="updateFirmware()">Update</button>
+                <button class="alt" :disabled="isUpdating" @click="updateFirmware()">Update</button>
             </div>
         </main>
     </div>
@@ -60,7 +60,7 @@ export default {
             this.$electron.ipcRenderer.on("update-firmware-start", () => {
                 this.isUpdating = true;
             });
-            this.$electron.ipcRenderer.on("update-firmware-success", () => {
+            this.$electron.ipcRenderer.on("update-firmware-finish", () => {
                 this.isUpdating = false;
             });
         }

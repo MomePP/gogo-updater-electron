@@ -78,12 +78,19 @@ ipcMain.on("update-firmware", (event, arg) => {
     child(executablePath, parameters, function (err, data) {
         if (err) {
             // may show error dialog ...
-            console.log(err)
+            // console.log(err)
+            dialog.showErrorBox('Updating Error', err)
             return;
         }
 
-        console.log(data.toString());
-        mainWindow.webContents.send('update-firmware-success')
+        var log = data.split(/\r?\n/)[0].split(':')
+
+        if (log[0] == 'Error')
+        {
+            dialog.showErrorBox('Updating Error', log[1])
+        }
+
+        mainWindow.webContents.send('update-firmware-finish')
     });
 })
 

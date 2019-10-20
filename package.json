@@ -1,6 +1,6 @@
 {
   "name": "gogo-updater",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "MomePP <peeranut32@gmail.com>",
   "description": "A firmware update program for gogo ecosystem",
   "license": null,
@@ -27,7 +27,7 @@
     ],
     "extraResources": [
       {
-        "from": "./src/script/",
+        "from": "src/script/",
         "to": "script",
         "filter": [
           "**/*"
@@ -50,13 +50,13 @@
       ]
     },
     "mac": {
-      "icon": "build/icons/icon.icns"
+      "icon": "favicon.ico"
     },
     "win": {
-      "icon": "build/icons/icon.ico"
+      "icon": "favicon.ico"
     },
     "linux": {
-      "icon": "build/icons"
+      "icon": "favicon.ico"
     }
   },
   "dependencies": {
