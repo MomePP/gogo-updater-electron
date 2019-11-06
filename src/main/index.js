@@ -82,7 +82,7 @@ ipcMain.on("update-firmware", (event, arg) => {
     child(executablePath, parameters, function (err, data) {
         if (err) {
             // may show error dialog ...
-            // console.log(err)
+            console.log(err)
             // dialog.showErrorBox('Updating Error', err)
             dialog.showMessageBox(mainWindow, { type: "error", title: 'Updating Error', message: err })
             return;
