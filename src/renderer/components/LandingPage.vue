@@ -95,9 +95,9 @@ export default {
         updateFirmware() {
             if (
                 this.esp_firmware_path != null &&
-                this.esp_firmware_path != "browse for esp firmware binary file" &&
-                this.stm_firmware_path != null &&
-                this.stm_firmware_path != "browse for stm firmware binary file"
+                // this.esp_firmware_path != "browse for esp firmware binary file"
+                this.stm_firmware_path != null
+                // this.stm_firmware_path != "browse for stm firmware binary file"
             ) {
                 this.$electron.ipcRenderer.send(
                     "update-firmware",
