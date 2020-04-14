@@ -56,15 +56,17 @@ app.on("activate", () => {
 
 var init_esp_firmware_update_packet = [0x00, 0x00, 0xc9];
 var init_stm_firmware_update_packet = [0x00, 0x00, 0xca];
-var firmware_length_packet = [0x00];
 var beep_packet = [0x00, 0x00, 0x0b];
+var firmware_length_packet = [0x00];
+const HID_PACKET_SIZE = 64;
 
 async function update_esp_firmware(esp_firmware_path) {
-    const HID_PACKET_SIZE = 64;
 
+    beep_packet.push.apply(beep_packet, Array(HID_PACKET_SIZE - beep_packet.length).fill(0));
     hidHandler.write(beep_packet);
     await functions.sleep(500);
 
+    init_esp_firmware_update_packet.push.apply(init_esp_firmware_update_packet, Array(HID_PACKET_SIZE - init_esp_firmware_update_packet.length).fill(0));
     hidHandler.write(init_esp_firmware_update_packet);
     await functions.sleep(1000);
 
@@ -174,9 +176,11 @@ async function update_stm_firmware(parameters) {
         }
     }
 
+    beep_packet.push.apply(beep_packet, Array(HID_PACKET_SIZE - beep_packet.length).fill(0));
     hidHandler.write(beep_packet);
     await functions.sleep(500);
 
+    init_stm_firmware_update_packet.push.apply(init_stm_firmware_update_packet, Array(HID_PACKET_SIZE - init_stm_firmware_update_packet.length).fill(0));
     hidHandler.write(init_stm_firmware_update_packet);
     await functions.sleep(1000);
 
