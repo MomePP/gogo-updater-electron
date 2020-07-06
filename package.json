@@ -1,9 +1,9 @@
 {
   "name": "gogo-updater",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "author": "MomePP <peeranut32@gmail.com>",
   "description": "A firmware update program for gogo ecosystem",
-  "license": null,
+  "license": "MIT",
   "main": "./dist/electron/main.js",
   "scripts": {
     "build": "node .electron-vue/build.js && electron-builder",
@@ -24,15 +24,6 @@
     },
     "files": [
       "dist/electron/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "src/script/",
-        "to": "script",
-        "filter": [
-          "**/*"
-        ]
-      }
     ],
     "dmg": {
       "contents": [
