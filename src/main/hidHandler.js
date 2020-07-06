@@ -1,5 +1,6 @@
-var HID = require('node-hid')
+import store from '../renderer/store'
 
+var HID = require('node-hid')
 var functions = require('./functions')
 
 const config = {
@@ -31,6 +32,8 @@ export default {
 
         if (this.hidDevice) {
             console.log('HID\t device connected')
+            store.dispatch('setConnected', true)
+
             this.hidDevice.on('data', data => {
                 this.onData(data)
             })
@@ -65,6 +68,7 @@ export default {
     onError(error) {
         console.log('HID\t ', 'device has disconnected')
         console.log('HID\t ', error)
+        store.dispatch('setConnected', false)
 
         this.hidDevice.close()
         this.hidDevice = null
