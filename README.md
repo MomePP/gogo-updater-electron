@@ -2,6 +2,8 @@
 
 > A firmware update program for gogo ecosystem
 
+NodeJS version 12 is recommended
+
 #### Build Setup
 
 ``` bash
