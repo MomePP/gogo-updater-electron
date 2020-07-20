@@ -3,6 +3,7 @@ import { app, BrowserWindow, ipcMain, dialog } from "electron";
 const fs = require("fs");
 var functions = require("./functions");
 import hidHandler from "./hidHandler";
+import store from '../renderer/store';
 
 /**
  * Set `__static` path to static files in production
@@ -25,9 +26,13 @@ function createWindow() {
      * Initial window options
      */
     mainWindow = new BrowserWindow({
-        height: 460,
+        height: 425,
+        width: 680,
         useContentSize: true,
-        width: 720
+        webPreferences: {
+            nodeIntegration: true,
+            enableRemoteModule: true
+        }
     });
     mainWindow.setMenu(null);
     mainWindow.loadURL(winURL);
@@ -76,7 +81,7 @@ async function update_esp_firmware(esp_firmware_path) {
 
         let data = "Content-Length: " + esp_firmware_size + "\n\n";
         let firmware_length_packet = [0x00];
-        firmware_length_packet.push.apply(firmware_length_packet, new Uint8Array(new Buffer(data)))
+        firmware_length_packet.push.apply(firmware_length_packet, new Uint8Array(Buffer.from(data)))
 
         try {
             fs.open(esp_firmware_path, 'r', async function (err, fd) {
@@ -90,13 +95,13 @@ async function update_esp_firmware(esp_firmware_path) {
                     reject(err);
                 }
 
-                let data_padding = new Uint8Array(new Buffer(HID_PACKET_SIZE - firmware_length_packet.length))
+                let data_padding = new Uint8Array(Buffer.alloc(HID_PACKET_SIZE - firmware_length_packet.length))
                 fs.readSync(fd, data_padding, 0, HID_PACKET_SIZE - firmware_length_packet.length, null)
 
                 firmware_length_packet.push.apply(firmware_length_packet, data_padding);
                 hidHandler.write(firmware_length_packet);
 
-                let firmware_packet = new Uint8Array(new Buffer(HID_PACKET_SIZE));
+                let firmware_packet = new Uint8Array(Buffer.alloc(HID_PACKET_SIZE));
                 let read_count = fs.readSync(fd, firmware_packet, 1, HID_PACKET_SIZE - 1, null)
 
                 while (read_count > 0) {
@@ -168,8 +173,8 @@ async function update_stm_firmware(stm_firmware_path) {
                         reject(err);
                     }
 
-                    let firmware_packet = new Uint8Array(new Buffer(STM_HID_TX_SIZE));
-                    let page_data = new Uint8Array(new Buffer(STM_SECTOR_SIZE));
+                    let firmware_packet = new Uint8Array(Buffer.alloc(STM_HID_TX_SIZE));
+                    let page_data = new Uint8Array(Buffer.alloc(STM_SECTOR_SIZE));
                     let read_count = fs.readSync(fd, page_data, 0, STM_SECTOR_SIZE, null)
                     // let countSector = 0;
 
@@ -211,6 +216,7 @@ async function update_stm_firmware(stm_firmware_path) {
 
                     // fs.close();
                     hidHandler.toggleSTMBootloader();
+                    await functions.sleep(2000);
 
                     dialog.showMessageBox(mainWindow, {
                         type: "info",
@@ -232,13 +238,27 @@ async function update_stm_firmware(stm_firmware_path) {
     })
 }
 
+async function checking_connection_status() {
+    // console.log("checking connection");
+    let timeout_counter = 10; //? 500ms * 10 -> 5s timeout
+
+    return new Promise(async (resolve, reject) => {
+        while (!store.getters["connected"]) {
+            if (timeout_counter == 0) reject();
+            timeout_counter--;
+            await functions.sleep(500);
+        }
+        resolve();
+    });
+}
+
 async function update_firmware(esp_path, stm_path) {
 
     if (stm_path != 'browse for stm firmware binary file') {
         try {
             await update_stm_firmware(stm_path);
             if (esp_path != 'browse for esp firmware binary file') {
-                await functions.sleep(2000);
+                await checking_connection_status();
             }
         }
         catch (e) {
@@ -265,33 +285,45 @@ async function update_firmware(esp_path, stm_path) {
 }
 
 ipcMain.on("browse-esp-firmware-path", () => {
-    var firmwarePath = dialog.showOpenDialog({
+    const dialog_option = {
         properties: ["openFile"],
         title: "select new esp firmware to update",
         filters: [{ name: "firmware file", extensions: ["bin"] }]
-    });
-
-    if (firmwarePath != null) {
-        mainWindow.webContents.send(
-            "browse-esp-firmware-path-response",
-            firmwarePath
-        );
     }
+
+    dialog.showOpenDialog(mainWindow, dialog_option).then(result => {
+        if (result.canceled) {
+            console.log("canceled");
+        } else if (result.filePaths) {
+            mainWindow.webContents.send(
+                "browse-esp-firmware-path-response",
+                result.filePaths
+            );
+        }
+    }).catch(err => {
+        console.log(err)
+    });
 });
 
 ipcMain.on("browse-stm-firmware-path", () => {
-    var firmwarePath = dialog.showOpenDialog({
+    const dialog_option = {
         properties: ["openFile"],
         title: "select new stm firmware to update",
         filters: [{ name: "firmware file", extensions: ["bin"] }]
-    });
-
-    if (firmwarePath != null) {
-        mainWindow.webContents.send(
-            "browse-stm-firmware-path-response",
-            firmwarePath
-        );
     }
+
+    dialog.showOpenDialog(mainWindow, dialog_option).then(result => {
+        if (result.canceled) {
+            console.log("canceled");
+        } else if (result.filePaths) {
+            mainWindow.webContents.send(
+                "browse-stm-firmware-path-response",
+                result.filePaths
+            );
+        }
+    }).catch(err => {
+        console.log(err)
+    });
 });
 
 ipcMain.on("browse-firmware-path-error", () => {
@@ -304,7 +336,7 @@ ipcMain.on("browse-firmware-path-error", () => {
 
 ipcMain.on("update-firmware", (event, espFirmwarePath, stmFirmwarePath) => {
 
-    console.log(espFirmwarePath, stmFirmwarePath);
+    // console.log(espFirmwarePath, stmFirmwarePath);
     // executablePath = require('path').join(require('path').dirname(__dirname), 'script', 'windows\\hid-flash.exe')
 
     mainWindow.webContents.send("update-firmware-start");
