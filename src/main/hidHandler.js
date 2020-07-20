@@ -92,19 +92,19 @@ export default {
         return [0]
     },
 
-    toggleSTMBootloader () {
+    toggleSTMBootloader() {
         this.isSTMBootloader = !this.isSTMBootloader;
     },
 
-    setSectorFlag () {
+    setSectorFlag() {
         this.isSectorFinished = true;
     },
 
-    clearSectorFlag () {
+    clearSectorFlag() {
         this.isSectorFinished = false;
     },
 
-    checkSectorFlag () {
+    checkSectorFlag() {
         return this.isSectorFinished;
     }
 }
