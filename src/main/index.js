@@ -40,6 +40,13 @@ function createWindow() {
     mainWindow.on("closed", () => {
         mainWindow = null;
     });
+
+    mainWindow.webContents.on('did-finish-load', () => {
+        let name = require('../../package.json').build.productName;
+        let version = require('../../package.json').version;
+        let windowTitle = name + " v" + version;
+        mainWindow.setTitle(windowTitle);
+    });
 }
 
 app.on("ready", () => {
