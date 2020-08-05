@@ -1,0 +1,13 @@
+# Copy this udev with "sudo cp ./51-gogo-udev.rules /etc/udev/rules.d/"
+# Edit it to suit your type of Linux. It's currently set up for modern Ubuntu
+# When done, do "sudo udevadm control --reload"
+# and unplug and replug in the gogoboard device.
+
+# Note the hex values for vid & pid must be lower-case
+# SYSFS{idVendor}=="0461", SYSFS{idProduct}=="0020", MODE="666"
+#ATTRS{idVendor}=="0461", ATTRS{idProduct}=="0020", SUBSYSTEMS=="usb", ACTION=="add", MODE="0666", GROUP="plugdev"
+
+# modern ubuntu
+SUBSYSTEM=="input", GROUP="input", MODE="0666"
+ATTRS{idVendor}=="0461", ATTRS{idProduct}=="0020", MODE:="666", GROUP="plugdev"
+KERNEL=="hidraw*", ATTRS{idVendor}=="0461", ATTRS{idProduct}=="0020", MODE="0666", GROUP="plugdev"
