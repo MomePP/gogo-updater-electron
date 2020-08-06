@@ -11,3 +11,7 @@
 SUBSYSTEM=="input", GROUP="input", MODE="0666"
 ATTRS{idVendor}=="0461", ATTRS{idProduct}=="0020", MODE:="666", GROUP="plugdev"
 KERNEL=="hidraw*", ATTRS{idVendor}=="0461", ATTRS{idProduct}=="0020", MODE="0666", GROUP="plugdev"
+
+SUBSYSTEM=="input", GROUP="input", MODE="0666"
+ATTRS{idVendor}=="1209", ATTRS{idProduct}=="beba", MODE:="666", GROUP="plugdev"
+KERNEL=="hidraw*", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="beba", MODE="0666", GROUP="plugdev"

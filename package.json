@@ -1,6 +1,6 @@
 {
   "name": "gogo-updater",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "author": "MomePP <peeranut32@gmail.com>",
   "description": "A firmware upgrade program for gogo ecosystem",
   "license": "MIT",
@@ -20,37 +20,44 @@
     "productName": "GoGo Updater",
     "appId": "com.peeranut.gogo-updater",
     "directories": {
-      "output": "build"
+			"output": "build",
+			"buildResources": "resources"
     },
     "files": [
       "dist/electron/**/*"
     ],
-    "dmg": {
-      "contents": [
-        {
-          "x": 410,
-          "y": 150,
-          "type": "link",
-          "path": "/Applications"
-        },
-        {
-          "x": 130,
-          "y": 150,
-          "type": "file"
-        }
-      ]
-    },
     "mac": {
-      "icon": "gogo-logo-512.png"
+			"target": ["dmg"]
     },
+		"dmg": {
+			"contents": [
+				{
+					"x": 410,
+					"y": 150,
+					"type": "link",
+					"path": "/Applications"
+				},
+				{
+					"x": 130,
+					"y": 150,
+					"type": "file"
+				}
+			]
+		},
     "win": {
-      "icon": "gogo-logo-512.png"
+			"target": [
+				{
+					"target": "nsis",
+					"arch": [  "x64", "ia32" ]
+				}
+			]
     },
     "linux": {
-      "icon": "gogo-logo-512.png",
       "category": "Utility",
       "target": [
-        "deb"
+				{
+					"target": "deb"
+				}
 			],
 			"extraResources": [
 				{
