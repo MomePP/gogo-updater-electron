@@ -1,9 +1,9 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
-
-const fs = require("fs");
-var functions = require("./functions");
 import hidHandler from "./hidHandler";
 import store from '../renderer/store';
+
+var functions = require("./functions");
+const fs = require("fs");
 
 /**
  * Set `__static` path to static files in production
@@ -25,15 +25,16 @@ function createWindow() {
     /**
      * Initial window options
      */
-    mainWindow = new BrowserWindow({
+    let options = {
         height: 425,
         width: 680,
         useContentSize: true,
         webPreferences: {
             nodeIntegration: true,
             enableRemoteModule: true
-        }
-    });
+		}
+	};
+    mainWindow = new BrowserWindow(options);
     mainWindow.setMenu(null);
     mainWindow.loadURL(winURL);
 
