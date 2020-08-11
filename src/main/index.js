@@ -32,8 +32,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             enableRemoteModule: true
-		}
-	};
+        }
+    };
     mainWindow = new BrowserWindow(options);
     mainWindow.setMenu(null);
     mainWindow.loadURL(winURL);
@@ -98,7 +98,8 @@ async function update_esp_firmware(esp_firmware_path) {
                     dialog.showMessageBox(mainWindow, {
                         type: "error",
                         title: "ESP Updating Error",
-                        message: err
+                        message: err,
+                        buttons: ['Ok']
                     });
                     reject(err);
                 }
@@ -123,7 +124,8 @@ async function update_esp_firmware(esp_firmware_path) {
                 dialog.showMessageBox(mainWindow, {
                     type: "info",
                     title: "ESP Update Successfully !",
-                    message: "Updating ESP firmware was successful."
+                    message: "Updating ESP firmware was successful.",
+                    buttons: ['Ok']
                 });
                 resolve();
             });
@@ -131,7 +133,8 @@ async function update_esp_firmware(esp_firmware_path) {
             dialog.showMessageBox(mainWindow, {
                 type: "error",
                 title: "ESP Updating Error",
-                message: err.message
+                message: err.message,
+                buttons: ['Ok']
             });
             reject(err.message)
         }
@@ -176,7 +179,8 @@ async function update_stm_firmware(stm_firmware_path) {
                         dialog.showMessageBox(mainWindow, {
                             type: "error",
                             title: "STM Updating Error",
-                            message: err
+                            message: err,
+                            buttons: ['Ok']
                         });
                         reject(err);
                     }
@@ -229,7 +233,8 @@ async function update_stm_firmware(stm_firmware_path) {
                     dialog.showMessageBox(mainWindow, {
                         type: "info",
                         title: "STM Update Successfully !",
-                        message: "Updating STM firmware was successful."
+                        message: "Updating STM firmware was successful.",
+                        buttons: ['Ok']
                     });
                     resolve();
                 })
@@ -238,7 +243,8 @@ async function update_stm_firmware(stm_firmware_path) {
                 dialog.showMessageBox(mainWindow, {
                     type: "error",
                     title: "STM Updating Error",
-                    message: err.message
+                    message: err.message,
+                    buttons: ['Ok']
                 });
                 reject(err.message);
             }
@@ -273,7 +279,8 @@ async function update_firmware(esp_path, stm_path) {
             dialog.showMessageBox(mainWindow, {
                 type: "error",
                 title: "STM Updating Error",
-                message: e
+                message: e,
+                buttons: ['Ok']
             });
         }
     }
@@ -286,7 +293,8 @@ async function update_firmware(esp_path, stm_path) {
             dialog.showMessageBox(mainWindow, {
                 type: "error",
                 title: "ESP Updating Error",
-                message: e
+                message: e,
+                buttons: ['Ok']
             });
         }
     }
@@ -338,7 +346,8 @@ ipcMain.on("browse-firmware-path-error", () => {
     dialog.showMessageBox(mainWindow, {
         type: "error",
         title: "Updating Error",
-        message: "Please browse for firmware file before click 'Update'"
+        message: "Please browse for firmware file before click 'Update'",
+        buttons: ['Ok']
     });
 });
 
