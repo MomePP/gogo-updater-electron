@@ -1,6 +1,6 @@
 {
  "name": "gogo-updater",
- "version": "0.4.4",
+ "version": "0.4.5",
  "author": "MomePP <peeranut32@gmail.com>",
  "description": "A firmware upgrade program for gogo ecosystem",
  "license": "MIT",
@@ -82,7 +82,7 @@
  },
  "dependencies": {
   "axios": "^0.18.0",
-  "node-hid": "^1.3.0",
+  "node-hid": "^1.3.1",
   "vue": "^2.6.11",
   "vue-electron": "^1.0.6",
   "vue-router": "^3.3.4",
@@ -111,6 +111,7 @@
   "electron-debug": "^1.5.0",
   "electron-devtools-installer": "^3.1.1",
   "electron-rebuild": "^1.11.0",
+  "electron-store": "^6.0.0",
   "file-loader": "^1.1.11",
   "html-webpack-plugin": "^3.2.0",
   "mini-css-extract-plugin": "0.4.0",
