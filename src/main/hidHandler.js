@@ -80,7 +80,7 @@ export default {
         if (this.hidDevice) {
             try {
                 var writtenByte = this.hidDevice.write(data)
-                //   console.log(`HID\t ', 'Written ${writtenByte} bytes`)
+                // console.log(`HID\t ', 'Written ${writtenByte} bytes`)
                 return writtenByte > 0
             } catch (error) {
                 // console.log(error);

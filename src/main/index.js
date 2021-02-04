@@ -115,7 +115,7 @@ async function update_esp_firmware(esp_firmware_path) {
 
                 while (read_count > 0) {
                     hidHandler.write(firmware_packet);
-                    await functions.sleep(0.1);
+                    await functions.sleep(0.5);
 
                     firmware_packet.fill(0);
                     read_count = fs.readSync(fd, firmware_packet, 1, HID_PACKET_SIZE - 1, null)
@@ -159,20 +159,13 @@ async function update_stm_firmware(stm_firmware_path) {
 
     hidHandler.toggleSTMBootloader()
     await checking_connection_status();
-    await functions.sleep(2000);
+    await functions.sleep(1000);
 
     return new Promise((resolve, reject) => {
         if (hidHandler.hidDevice) {
             var stats = fs.statSync(stm_firmware_path);
             var stm_firmware_size = stats.size;
             console.log('File Size in Bytes:- ' + stm_firmware_size);
-
-            //? send RESET PAGE
-            let reset_packet = [0]
-            reset_packet.push.apply(reset_packet, CMD_RESET_PAGES);
-            reset_packet.push.apply(reset_packet, Array(STM_HID_TX_SIZE - reset_packet.length).fill(0));
-            // console.log(reset_packet);
-            hidHandler.write(reset_packet);
 
             try {
                 fs.open(stm_firmware_path, 'r', async function (err, fd) {
@@ -185,6 +178,14 @@ async function update_stm_firmware(stm_firmware_path) {
                         });
                         reject(err);
                     }
+
+                    //? send RESET PAGE
+                    let reset_packet = [0]
+                    reset_packet.push.apply(reset_packet, CMD_RESET_PAGES);
+                    reset_packet.push.apply(reset_packet, Array(STM_HID_TX_SIZE - reset_packet.length).fill(0));
+                    console.log(reset_packet);
+                    hidHandler.write(reset_packet);
+                    await functions.sleep(1);
 
                     let firmware_packet = new Uint8Array(Buffer.alloc(STM_HID_TX_SIZE));
                     let page_data = new Uint8Array(Buffer.alloc(STM_SECTOR_SIZE));
@@ -205,7 +206,7 @@ async function update_stm_firmware(stm_firmware_path) {
                             hidHandler.write(firmware_packet);
                             n_bytes += (STM_HID_TX_SIZE - 1);
                             
-                            await functions.sleep(1);
+                            await functions.sleep(0.5);
                         }
                         console.log(" %d Bytes\n", n_bytes);
 
@@ -213,7 +214,7 @@ async function update_stm_firmware(stm_firmware_path) {
 
                         while (!hidHandler.checkSectorFlag()) {
                             // console.log("wait");
-                            await functions.sleep(1)
+                            await functions.sleep(10)
                         } //* this blocking wait for onData handler
                         hidHandler.clearSectorFlag();
 
