@@ -25,7 +25,7 @@ export default {
                 this.hidDevice = new HID.HID(config.stm_vid, config.stm_pid)
             }
         } catch (error) {
-            console.log(error);
+            // console.log(error);
             console.log('HID\t no device')
             this.retryInitHID()
         }
@@ -67,7 +67,7 @@ export default {
 
     onError(error) {
         console.log('HID\t ', 'device has disconnected')
-        console.log('HID\t ', error)
+        // console.log('HID\t ', error)
         store.dispatch('setConnected', false)
 
         this.hidDevice.close()
@@ -78,9 +78,14 @@ export default {
 
     write(data) {
         if (this.hidDevice) {
-            var writtenByte = this.hidDevice.write(data)
-            //   console.log(`HID\t ', 'Written ${writtenByte} bytes`)
-            return writtenByte > 0
+            try {
+                var writtenByte = this.hidDevice.write(data)
+                //   console.log(`HID\t ', 'Written ${writtenByte} bytes`)
+                return writtenByte > 0
+            } catch (error) {
+                // console.log(error);
+                console.log('HID\t write failed')
+            }
         }
         return false
     },

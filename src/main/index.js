@@ -158,6 +158,7 @@ async function update_stm_firmware(stm_firmware_path) {
     await functions.sleep(1000);
 
     hidHandler.toggleSTMBootloader()
+    await checking_connection_status();
     await functions.sleep(2000);
 
     return new Promise((resolve, reject) => {
@@ -188,7 +189,7 @@ async function update_stm_firmware(stm_firmware_path) {
                     let firmware_packet = new Uint8Array(Buffer.alloc(STM_HID_TX_SIZE));
                     let page_data = new Uint8Array(Buffer.alloc(STM_SECTOR_SIZE));
                     let read_count = fs.readSync(fd, page_data, 0, STM_SECTOR_SIZE, null)
-                    // let countSector = 0;
+                    let n_bytes = 0;
 
                     while (read_count > 0) {
                         // console.log(page_data);
@@ -198,21 +199,26 @@ async function update_stm_firmware(stm_firmware_path) {
                             for (let j = 0; j < STM_HID_TX_SIZE - 1; j++) {
                                 firmware_packet[j + 1] = page_data[i + j];
                             }
+                            
                             // console.log('sector chunk: '+ (countChunk++));
                             // console.log(firmware_packet);
                             hidHandler.write(firmware_packet);
-                            await functions.sleep(0.1);
+                            n_bytes += (STM_HID_TX_SIZE - 1);
+                            
+                            await functions.sleep(1);
                         }
+                        console.log(" %d Bytes\n", n_bytes);
 
                         // hidHandler.write(firmware_packet);
 
                         while (!hidHandler.checkSectorFlag()) {
                             // console.log("wait");
-                            await functions.sleep(10)
+                            await functions.sleep(1)
                         } //* this blocking wait for onData handler
                         hidHandler.clearSectorFlag();
 
                         // console.log('sector count: ' + (countSector++));
+                        // console.log('stm update: ' + (((++countSector * STM_SECTOR_SIZE) / stm_firmware_size) * 100) + '%');
 
                         page_data.fill(0);
                         read_count = fs.readSync(fd, page_data, 0, STM_SECTOR_SIZE, null)
