@@ -59,8 +59,8 @@ export default {
         // wss.broadcast(JSON.stringify(packet))
         if (this.isSTMBootloader) {
             if (data[7] == 0x02) {
-                this.isSectorFinished = true;
                 // console.log('set sector flag');
+                this.isSectorFinished = true;
             }
         }
     },
@@ -106,6 +106,7 @@ export default {
     },
 
     clearSectorFlag() {
+        // console.log('clear sector flag');
         this.isSectorFinished = false;
     },
 

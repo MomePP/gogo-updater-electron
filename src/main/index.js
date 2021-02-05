@@ -183,9 +183,9 @@ async function update_stm_firmware(stm_firmware_path) {
                     let reset_packet = [0]
                     reset_packet.push.apply(reset_packet, CMD_RESET_PAGES);
                     reset_packet.push.apply(reset_packet, Array(STM_HID_TX_SIZE - reset_packet.length).fill(0));
-                    console.log(reset_packet);
+                    // console.log(reset_packet);
                     hidHandler.write(reset_packet);
-                    await functions.sleep(1);
+                    await functions.sleep(500);
 
                     let firmware_packet = new Uint8Array(Buffer.alloc(STM_HID_TX_SIZE));
                     let page_data = new Uint8Array(Buffer.alloc(STM_SECTOR_SIZE));
@@ -214,7 +214,7 @@ async function update_stm_firmware(stm_firmware_path) {
 
                         while (!hidHandler.checkSectorFlag()) {
                             // console.log("wait");
-                            await functions.sleep(10)
+                            await functions.sleep(1)
                         } //* this blocking wait for onData handler
                         hidHandler.clearSectorFlag();
 
@@ -223,6 +223,7 @@ async function update_stm_firmware(stm_firmware_path) {
 
                         page_data.fill(0);
                         read_count = fs.readSync(fd, page_data, 0, STM_SECTOR_SIZE, null)
+                        await functions.sleep(100) // ! waiting for sector changed
                     }
                     await functions.sleep(1000);
 
