@@ -112,11 +112,17 @@ async function update_esp_firmware(esp_firmware_path) {
 
                 let firmware_packet = new Uint8Array(Buffer.alloc(HID_PACKET_SIZE));
                 let read_count = fs.readSync(fd, firmware_packet, 1, HID_PACKET_SIZE - 1, null)
+                var n_bytes = 0;
 
                 while (read_count > 0) {
-                    hidHandler.write(firmware_packet);
-                    await functions.sleep(0.1);
+                    n_bytes += hidHandler.write(firmware_packet);
+                    await functions.sleep(0.05);
 
+                    if (n_bytes % 1024 == 0) {
+                        var progressPercentage = Math.min(((n_bytes / esp_firmware_size) * 100).toFixed(2), 100.00);
+                        store.dispatch('updateProgress', progressPercentage)
+                        // console.log("%d%\n", progressPercentage);
+                    }
                     firmware_packet.fill(0);
                     read_count = fs.readSync(fd, firmware_packet, 1, HID_PACKET_SIZE - 1, null)
                 }
@@ -127,6 +133,7 @@ async function update_esp_firmware(esp_firmware_path) {
                     message: "Updating ESP firmware was successful.",
                     buttons: ['Ok']
                 });
+                store.dispatch('updateProgress', 0)
                 resolve();
             });
         } catch (err) {
@@ -158,20 +165,13 @@ async function update_stm_firmware(stm_firmware_path) {
     await functions.sleep(1000);
 
     hidHandler.toggleSTMBootloader()
-    await functions.sleep(2000);
+    await checking_connection_status();
 
     return new Promise((resolve, reject) => {
         if (hidHandler.hidDevice) {
             var stats = fs.statSync(stm_firmware_path);
             var stm_firmware_size = stats.size;
             console.log('File Size in Bytes:- ' + stm_firmware_size);
-
-            //? send RESET PAGE
-            let reset_packet = [0]
-            reset_packet.push.apply(reset_packet, CMD_RESET_PAGES);
-            reset_packet.push.apply(reset_packet, Array(STM_HID_TX_SIZE - reset_packet.length).fill(0));
-            // console.log(reset_packet);
-            hidHandler.write(reset_packet);
 
             try {
                 fs.open(stm_firmware_path, 'r', async function (err, fd) {
@@ -185,10 +185,18 @@ async function update_stm_firmware(stm_firmware_path) {
                         reject(err);
                     }
 
+                    //? send RESET PAGE
+                    let reset_packet = [0]
+                    reset_packet.push.apply(reset_packet, CMD_RESET_PAGES);
+                    reset_packet.push.apply(reset_packet, Array(STM_HID_TX_SIZE - reset_packet.length).fill(0));
+                    // console.log(reset_packet);
+                    hidHandler.write(reset_packet);
+                    await functions.sleep(500);
+
                     let firmware_packet = new Uint8Array(Buffer.alloc(STM_HID_TX_SIZE));
                     let page_data = new Uint8Array(Buffer.alloc(STM_SECTOR_SIZE));
                     let read_count = fs.readSync(fd, page_data, 0, STM_SECTOR_SIZE, null)
-                    // let countSector = 0;
+                    let n_bytes = 0;
 
                     while (read_count > 0) {
                         // console.log(page_data);
@@ -198,24 +206,32 @@ async function update_stm_firmware(stm_firmware_path) {
                             for (let j = 0; j < STM_HID_TX_SIZE - 1; j++) {
                                 firmware_packet[j + 1] = page_data[i + j];
                             }
+
                             // console.log('sector chunk: '+ (countChunk++));
                             // console.log(firmware_packet);
-                            hidHandler.write(firmware_packet);
-                            await functions.sleep(0.1);
-                        }
+                            // hidHandler.write(firmware_packet);
+                            n_bytes += hidHandler.write(firmware_packet) - 1;
 
+                            await functions.sleep(0.5);
+                        }
                         // hidHandler.write(firmware_packet);
 
                         while (!hidHandler.checkSectorFlag()) {
                             // console.log("wait");
-                            await functions.sleep(10)
+                            await functions.sleep(1)
                         } //* this blocking wait for onData handler
                         hidHandler.clearSectorFlag();
 
                         // console.log('sector count: ' + (countSector++));
+                        // console.log('stm update: ' + (((++countSector * STM_SECTOR_SIZE) / stm_firmware_size) * 100) + '%');
+
+                        var progressPercentage = Math.min(((n_bytes / stm_firmware_size) * 100).toFixed(2), 100.00);
+                        store.dispatch('updateProgress', progressPercentage)
+                        // console.log("%d%\n", progressPercentage);
 
                         page_data.fill(0);
                         read_count = fs.readSync(fd, page_data, 0, STM_SECTOR_SIZE, null)
+                        await functions.sleep(100) // ! waiting for sector changed
                     }
                     await functions.sleep(1000);
 
@@ -236,6 +252,7 @@ async function update_stm_firmware(stm_firmware_path) {
                         message: "Updating STM firmware was successful.",
                         buttons: ['Ok']
                     });
+                    store.dispatch('updateProgress', 0)
                     resolve();
                 })
 

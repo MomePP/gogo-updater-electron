@@ -25,7 +25,7 @@ export default {
                 this.hidDevice = new HID.HID(config.stm_vid, config.stm_pid)
             }
         } catch (error) {
-            console.log(error);
+            // console.log(error);
             console.log('HID\t no device')
             this.retryInitHID()
         }
@@ -59,15 +59,15 @@ export default {
         // wss.broadcast(JSON.stringify(packet))
         if (this.isSTMBootloader) {
             if (data[7] == 0x02) {
-                this.isSectorFinished = true;
                 // console.log('set sector flag');
+                this.isSectorFinished = true;
             }
         }
     },
 
     onError(error) {
         console.log('HID\t ', 'device has disconnected')
-        console.log('HID\t ', error)
+        // console.log('HID\t ', error)
         store.dispatch('setConnected', false)
 
         this.hidDevice.close()
@@ -78,11 +78,16 @@ export default {
 
     write(data) {
         if (this.hidDevice) {
-            var writtenByte = this.hidDevice.write(data)
-            //   console.log(`HID\t ', 'Written ${writtenByte} bytes`)
-            return writtenByte > 0
+            try {
+                // var writtenByte = this.hidDevice.write(data)
+                // console.log(`HID\t ', 'Written ${writtenByte} bytes`)
+                return this.hidDevice.write(data)
+            } catch (error) {
+                // console.log(error);
+                console.log('HID\t write failed')
+            }
         }
-        return false
+        return 0
     },
 
     read() {
@@ -101,6 +106,7 @@ export default {
     },
 
     clearSectorFlag() {
+        // console.log('clear sector flag');
         this.isSectorFinished = false;
     },
 

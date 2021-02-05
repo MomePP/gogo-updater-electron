@@ -45,6 +45,7 @@
                     :color="color"
                     :size="size"
                 ></clip-loader>
+                <p> &nbsp; &nbsp; {{ isUpdating ? getUpdateProgress + '%' : "" }}</p>
             </div>
         </main>
         <div class="footer-box">
@@ -67,6 +68,9 @@ export default {
     computed: {
         connected() {
             return this.$store.getters["connected"];
+        },
+        getUpdateProgress() {
+            return this.$store.getters["update_progress"]
         }
     },
     components: {
