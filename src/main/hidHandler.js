@@ -14,7 +14,9 @@ const config = {
 export default {
     hidDevice: null,
     isSTMBootloader: false,
-    isSectorFinished: false,
+    isSTMSectorFinished: false,
+    isESPBootloader: false,
+    isESPSectorFinished: false,
 
     initHID() {
         try {
@@ -59,8 +61,12 @@ export default {
         // wss.broadcast(JSON.stringify(packet))
         if (this.isSTMBootloader) {
             if (data[7] == 0x02) {
-                // console.log('set sector flag');
-                this.isSectorFinished = true;
+                this.isSTMSectorFinished = true;
+            }
+        }
+        else if (this.isESPBootloader) {
+            if (data[2] == 201 && data[3] == 1) {
+                this.isESPSectorFinished = true;
             }
         }
     },
@@ -101,16 +107,23 @@ export default {
         this.isSTMBootloader = !this.isSTMBootloader;
     },
 
-    setSectorFlag() {
-        this.isSectorFinished = true;
+    clearSTMSectorFlag() {
+        this.isSTMSectorFinished = false;
     },
 
-    clearSectorFlag() {
-        // console.log('clear sector flag');
-        this.isSectorFinished = false;
+    checkSTMSectorFlag() {
+        return this.isSTMSectorFinished;
     },
 
-    checkSectorFlag() {
-        return this.isSectorFinished;
+    toggleESPBootloader() {
+        this.isESPBootloader = !this.isESPBootloader;
+    },
+
+    clearESPSectorFlag() {
+        this.isESPSectorFinished = false;
+    },
+
+    checkESPSectorFlag() {
+        return this.isESPSectorFinished;
     }
 }

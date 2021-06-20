@@ -74,6 +74,8 @@ const HID_PACKET_SIZE = 64;
 
 async function update_esp_firmware(esp_firmware_path) {
     console.log("start update esp");
+    const ESP_SECTOR_SIZE = 1008
+
     beep_packet.push.apply(beep_packet, Array(HID_PACKET_SIZE - beep_packet.length).fill(0));
     hidHandler.write(beep_packet);
     await functions.sleep(500);
@@ -81,6 +83,8 @@ async function update_esp_firmware(esp_firmware_path) {
     init_esp_firmware_update_packet.push.apply(init_esp_firmware_update_packet, Array(HID_PACKET_SIZE - init_esp_firmware_update_packet.length).fill(0));
     hidHandler.write(init_esp_firmware_update_packet);
     await functions.sleep(1000);
+
+    hidHandler.toggleESPBootloader();
 
     return new Promise((resolve, reject) => {
         var stats = fs.statSync(esp_firmware_path);
@@ -111,21 +115,33 @@ async function update_esp_firmware(esp_firmware_path) {
                 hidHandler.write(firmware_length_packet);
 
                 let firmware_packet = new Uint8Array(Buffer.alloc(HID_PACKET_SIZE));
-                let read_count = fs.readSync(fd, firmware_packet, 1, HID_PACKET_SIZE - 1, null)
+                let page_data = new Uint8Array(Buffer.alloc(ESP_SECTOR_SIZE));
+                let read_count = fs.readSync(fd, page_data, 0, ESP_SECTOR_SIZE, null)
                 var n_bytes = 0;
 
                 while (read_count > 0) {
-                    n_bytes += hidHandler.write(firmware_packet);
-                    await functions.sleep(0.05);
-
-                    if (n_bytes % 1024 == 0) {
-                        var progressPercentage = Math.min(((n_bytes / esp_firmware_size) * 100).toFixed(2), 100.00);
-                        store.dispatch('updateProgress', progressPercentage)
-                        // console.log("%d%\n", progressPercentage);
+                    for (let i = 0; i < ESP_SECTOR_SIZE; i += HID_PACKET_SIZE - 1) {
+                        for (let j = 0; j < HID_PACKET_SIZE - 1; j++) {
+                            firmware_packet[j + 1] = page_data[i + j];
+                        }
+                        n_bytes += hidHandler.write(firmware_packet) - 1;
                     }
+
+                    while (!hidHandler.checkESPSectorFlag()) {
+                        await functions.sleep(10)
+                    } //* this blocking wait for onData handler
+                    hidHandler.clearESPSectorFlag();
+
+                    var progressPercentage = Math.min(((n_bytes / esp_firmware_size) * 100).toFixed(2), 100.00);
+                    store.dispatch('updateProgress', progressPercentage)
+
                     firmware_packet.fill(0);
-                    read_count = fs.readSync(fd, firmware_packet, 1, HID_PACKET_SIZE - 1, null)
+                    read_count = fs.readSync(fd, page_data, 0, ESP_SECTOR_SIZE, null)
+                    await functions.sleep(100) // ! waiting for sector changed
                 }
+                await functions.sleep(1000);
+
+                hidHandler.toggleESPBootloader();
 
                 dialog.showMessageBox(mainWindow, {
                     type: "info",
@@ -150,11 +166,11 @@ async function update_esp_firmware(esp_firmware_path) {
 
 async function update_stm_firmware(stm_firmware_path) {
     console.log("start update stm");
-    let STM_SECTOR_SIZE = 1024
-    let STM_HID_TX_SIZE = 65
+    const STM_SECTOR_SIZE = 1024
+    const STM_HID_TX_SIZE = 65
 
-    let CMD_RESET_PAGES = [0x42, 0x54, 0x4c, 0x44, 0x43, 0x4d, 0x44, 0x00];
-    let CMD_REBOOT_MCU = [0x42, 0x54, 0x4c, 0x44, 0x43, 0x4d, 0x44, 0x01];
+    const CMD_RESET_PAGES = [0x42, 0x54, 0x4c, 0x44, 0x43, 0x4d, 0x44, 0x00];
+    const CMD_REBOOT_MCU = [0x42, 0x54, 0x4c, 0x44, 0x43, 0x4d, 0x44, 0x01];
 
     beep_packet.push.apply(beep_packet, Array(HID_PACKET_SIZE - beep_packet.length).fill(0));
     hidHandler.write(beep_packet);
@@ -189,7 +205,6 @@ async function update_stm_firmware(stm_firmware_path) {
                     let reset_packet = [0]
                     reset_packet.push.apply(reset_packet, CMD_RESET_PAGES);
                     reset_packet.push.apply(reset_packet, Array(STM_HID_TX_SIZE - reset_packet.length).fill(0));
-                    // console.log(reset_packet);
                     hidHandler.write(reset_packet);
                     await functions.sleep(500);
 
@@ -199,35 +214,21 @@ async function update_stm_firmware(stm_firmware_path) {
                     let n_bytes = 0;
 
                     while (read_count > 0) {
-                        // console.log(page_data);
-
-                        // let countChunk = 1;
                         for (let i = 0; i < STM_SECTOR_SIZE; i += STM_HID_TX_SIZE - 1) {
                             for (let j = 0; j < STM_HID_TX_SIZE - 1; j++) {
                                 firmware_packet[j + 1] = page_data[i + j];
                             }
-
-                            // console.log('sector chunk: '+ (countChunk++));
-                            // console.log(firmware_packet);
-                            // hidHandler.write(firmware_packet);
                             n_bytes += hidHandler.write(firmware_packet) - 1;
-
                             await functions.sleep(0.5);
                         }
-                        // hidHandler.write(firmware_packet);
 
-                        while (!hidHandler.checkSectorFlag()) {
-                            // console.log("wait");
+                        while (!hidHandler.checkSTMSectorFlag()) {
                             await functions.sleep(1)
                         } //* this blocking wait for onData handler
-                        hidHandler.clearSectorFlag();
-
-                        // console.log('sector count: ' + (countSector++));
-                        // console.log('stm update: ' + (((++countSector * STM_SECTOR_SIZE) / stm_firmware_size) * 100) + '%');
+                        hidHandler.clearSTMSectorFlag();
 
                         var progressPercentage = Math.min(((n_bytes / stm_firmware_size) * 100).toFixed(2), 100.00);
                         store.dispatch('updateProgress', progressPercentage)
-                        // console.log("%d%\n", progressPercentage);
 
                         page_data.fill(0);
                         read_count = fs.readSync(fd, page_data, 0, STM_SECTOR_SIZE, null)
