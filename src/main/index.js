@@ -71,10 +71,11 @@ var init_esp_firmware_update_packet = [0x00, 0x00, 0xc9];
 var init_stm_firmware_update_packet = [0x00, 0x00, 0xca];
 var beep_packet = [0x00, 0x00, 0x0b];
 const HID_PACKET_SIZE = 64;
+const RESPONSE_TIMEOUT = 500 //? 5sec timeout
 
 async function update_esp_firmware(esp_firmware_path) {
     console.log("start update esp");
-    const ESP_SECTOR_SIZE = 1008
+    const ESP_SECTOR_SIZE = 4032
 
     beep_packet.push.apply(beep_packet, Array(HID_PACKET_SIZE - beep_packet.length).fill(0));
     hidHandler.write(beep_packet);
@@ -118,8 +119,11 @@ async function update_esp_firmware(esp_firmware_path) {
                 let page_data = new Uint8Array(Buffer.alloc(ESP_SECTOR_SIZE));
                 let read_count = fs.readSync(fd, page_data, 0, ESP_SECTOR_SIZE, null)
                 var n_bytes = 0;
+                let timeoutCounter = 0;
+                let abortUpdate = false;
 
                 while (read_count > 0) {
+                    timeoutCounter = 0;
                     for (let i = 0; i < ESP_SECTOR_SIZE; i += HID_PACKET_SIZE - 1) {
                         for (let j = 0; j < HID_PACKET_SIZE - 1; j++) {
                             firmware_packet[j + 1] = page_data[i + j];
@@ -127,10 +131,18 @@ async function update_esp_firmware(esp_firmware_path) {
                         n_bytes += hidHandler.write(firmware_packet) - 1;
                     }
 
-                    while (!hidHandler.checkESPSectorFlag()) {
+                    while (!hidHandler.checkESPSectorFlag() && n_bytes < esp_firmware_size) {
+                        if (++timeoutCounter >= RESPONSE_TIMEOUT) {
+                            reject("Waiting for response timeout...")
+                            abortUpdate = true;
+                            break;
+                        }
                         await functions.sleep(10)
                     } //* this blocking wait for onData handler
                     hidHandler.clearESPSectorFlag();
+
+                    if (abortUpdate)
+                        break;
 
                     var progressPercentage = Math.min(((n_bytes / esp_firmware_size) * 100).toFixed(2), 100.00);
                     store.dispatch('updateProgress', progressPercentage)
@@ -142,6 +154,9 @@ async function update_esp_firmware(esp_firmware_path) {
                 await functions.sleep(1000);
 
                 hidHandler.toggleESPBootloader();
+
+                if (abortUpdate)
+                    return;
 
                 dialog.showMessageBox(mainWindow, {
                     type: "info",
@@ -212,8 +227,11 @@ async function update_stm_firmware(stm_firmware_path) {
                     let page_data = new Uint8Array(Buffer.alloc(STM_SECTOR_SIZE));
                     let read_count = fs.readSync(fd, page_data, 0, STM_SECTOR_SIZE, null)
                     let n_bytes = 0;
+                    let timeoutCounter = 0;
+                    let abortUpdate = false;
 
                     while (read_count > 0) {
+                        timeoutCounter = 0;
                         for (let i = 0; i < STM_SECTOR_SIZE; i += STM_HID_TX_SIZE - 1) {
                             for (let j = 0; j < STM_HID_TX_SIZE - 1; j++) {
                                 firmware_packet[j + 1] = page_data[i + j];
@@ -222,10 +240,18 @@ async function update_stm_firmware(stm_firmware_path) {
                             await functions.sleep(0.5);
                         }
 
-                        while (!hidHandler.checkSTMSectorFlag()) {
-                            await functions.sleep(1)
+                        while (!hidHandler.checkSTMSectorFlag() && n_bytes < stm_firmware_size) {
+                            if (++timeoutCounter >= RESPONSE_TIMEOUT) {
+                                reject("Waiting for response timeout...")
+                                abortUpdate = true;
+                                break;
+                            }
+                            await functions.sleep(10)
                         } //* this blocking wait for onData handler
                         hidHandler.clearSTMSectorFlag();
+
+                        if (abortUpdate)
+                            break;
 
                         var progressPercentage = Math.min(((n_bytes / stm_firmware_size) * 100).toFixed(2), 100.00);
                         store.dispatch('updateProgress', progressPercentage)
@@ -244,8 +270,12 @@ async function update_stm_firmware(stm_firmware_path) {
                     hidHandler.write(reboot_packet);
 
                     // fs.close();
+                    await functions.sleep(1000);
+
                     hidHandler.toggleSTMBootloader();
-                    await functions.sleep(2000);
+
+                    if (abortUpdate)
+                        return;
 
                     dialog.showMessageBox(mainWindow, {
                         type: "info",
