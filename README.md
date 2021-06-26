@@ -2,7 +2,7 @@
 
 > A firmware update program for gogo ecosystem
 
-NodeJS version 12 is recommended
+NodeJS version 14 is recommended
 
 #### Build Setup
 
