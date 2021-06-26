@@ -1,5 +1,4 @@
 const state = {
-  main: 0,
   connected: false,
   update_progress: 0
 }
@@ -10,12 +9,6 @@ const getters = {
 }
 
 const mutations = {
-  DECREMENT_MAIN_COUNTER (state) {
-    state.main--
-  },
-  INCREMENT_MAIN_COUNTER (state) {
-    state.main++
-  },
   SET_CONNECTION_STATUS (state, status) {
     state.connected = status
   },
@@ -25,10 +18,6 @@ const mutations = {
 }
 
 const actions = {
-  someAsyncTask ({ commit }) {
-    // do something async
-    commit('INCREMENT_MAIN_COUNTER')
-  },
   setConnected ({ commit }, status) {
     commit('SET_CONNECTION_STATUS', status)
   },
