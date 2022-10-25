@@ -31,8 +31,9 @@ function createWindow() {
         useContentSize: true,
         webPreferences: {
             nodeIntegration: true,
+            contextIsolation: false,
             enableRemoteModule: true,
-            devTools: false
+            devTools: false,
         }
     };
     mainWindow = new BrowserWindow(options);
