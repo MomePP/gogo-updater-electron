@@ -28,7 +28,7 @@ export default {
             }
         } catch (error) {
             // console.log(error);
-            console.log('HID\t no device')
+            // console.log('HID\t no device')
             store.dispatch('setConnected', false)
 
             this.retryInitHID()
