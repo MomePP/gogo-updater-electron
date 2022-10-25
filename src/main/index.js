@@ -31,7 +31,8 @@ function createWindow() {
         useContentSize: true,
         webPreferences: {
             nodeIntegration: true,
-            enableRemoteModule: true
+            enableRemoteModule: true,
+            devTools: false
         }
     };
     mainWindow = new BrowserWindow(options);
@@ -71,7 +72,8 @@ var init_esp_firmware_update_packet = [0x00, 0x00, 0xc9];
 var init_stm_firmware_update_packet = [0x00, 0x00, 0xca];
 var beep_packet = [0x00, 0x00, 0x0b];
 const HID_PACKET_SIZE = 64;
-const RESPONSE_TIMEOUT = 500 //? 5sec timeout
+const HID_DATA_SIZE = HID_PACKET_SIZE - 1;
+const RESPONSE_TIMEOUT = 100 //? 10sec timeout
 
 async function update_esp_firmware(esp_firmware_path) {
     console.log("start update esp");
@@ -97,8 +99,7 @@ async function update_esp_firmware(esp_firmware_path) {
         firmware_length_packet.push.apply(firmware_length_packet, new Uint8Array(Buffer.from(data)))
 
         try {
-            fs.open(esp_firmware_path, 'r', async function (err, fd) {
-                // fs.readFile(esp_firmware_path, function (err, data) {
+            fs.open(esp_firmware_path, 'r', async function(err, fd) {
                 if (err) {
                     dialog.showMessageBox(mainWindow, {
                         type: "error",
@@ -116,17 +117,17 @@ async function update_esp_firmware(esp_firmware_path) {
                 hidHandler.write(firmware_length_packet);
 
                 let firmware_packet = new Uint8Array(Buffer.alloc(HID_PACKET_SIZE));
-                let page_data = new Uint8Array(Buffer.alloc(ESP_SECTOR_SIZE));
-                let read_count = fs.readSync(fd, page_data, 0, ESP_SECTOR_SIZE, null)
-                var n_bytes = 0;
+                let sector_data = new Uint8Array(Buffer.alloc(ESP_SECTOR_SIZE));
+                let read_count = fs.readSync(fd, sector_data, 0, ESP_SECTOR_SIZE, null)
+
+                let n_bytes = 0;
                 let timeoutCounter = 0;
                 let abortUpdate = false;
-
-                while (read_count > 0) {
+                while (read_count > 0 && !abortUpdate) {
                     timeoutCounter = 0;
-                    for (let i = 0; i < ESP_SECTOR_SIZE; i += HID_PACKET_SIZE - 1) {
-                        for (let j = 0; j < HID_PACKET_SIZE - 1; j++) {
-                            firmware_packet[j + 1] = page_data[i + j];
+                    for (let page = 0; page < read_count; page += HID_DATA_SIZE) {
+                        for (let byte = 0; byte < HID_DATA_SIZE; byte++) {
+                            firmware_packet[byte + 1] = sector_data[page + byte];
                         }
                         n_bytes += hidHandler.write(firmware_packet) - 1;
                     }
@@ -137,19 +138,14 @@ async function update_esp_firmware(esp_firmware_path) {
                             abortUpdate = true;
                             break;
                         }
-                        await functions.sleep(10)
+                        await functions.sleep(100)
                     } //* this blocking wait for onData handler
                     hidHandler.clearESPSectorFlag();
 
-                    if (abortUpdate)
-                        break;
-
-                    var progressPercentage = Math.min(((n_bytes / esp_firmware_size) * 100).toFixed(2), 100.00);
+                    let progressPercentage = Math.min(((n_bytes / esp_firmware_size) * 100).toFixed(2), 100.00);
                     store.dispatch('updateProgress', progressPercentage)
 
-                    firmware_packet.fill(0);
-                    read_count = fs.readSync(fd, page_data, 0, ESP_SECTOR_SIZE, null)
-                    await functions.sleep(100) // ! waiting for sector changed
+                    read_count = fs.readSync(fd, sector_data, 0, ESP_SECTOR_SIZE, null)
                 }
                 await functions.sleep(1000);
 
@@ -205,7 +201,7 @@ async function update_stm_firmware(stm_firmware_path) {
             console.log('File Size in Bytes:- ' + stm_firmware_size);
 
             try {
-                fs.open(stm_firmware_path, 'r', async function (err, fd) {
+                fs.open(stm_firmware_path, 'r', async function(err, fd) {
                     if (err) {
                         dialog.showMessageBox(mainWindow, {
                             type: "error",
